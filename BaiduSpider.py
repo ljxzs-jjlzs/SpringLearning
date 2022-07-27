@@ -30,6 +30,7 @@ def get_page(url):
 
 
 if __name__ == "__main__":
+    print('Hello 1')
     url = "https://top.baidu.com/board?tab=realtime"
     results = get_page(url)
     today = datetime.today()
