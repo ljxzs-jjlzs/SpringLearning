@@ -33,6 +33,9 @@ class BiliBiliSpider:
         driver.get(self.url)
         time.sleep(3)
         results = driver.find_elements(By.CSS_SELECTOR, '.rank-item')
+        while results is None:
+            results = driver.find_elements(By.CSS_SELECTOR, '.rank-item')
+            time.sleep(2)
         for result in results:
             text = result.find_element(By.CSS_SELECTOR, '.detail-state').text
             text = text.split('\n')

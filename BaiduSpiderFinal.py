@@ -32,6 +32,9 @@ class BaiduSpider:
         browser.get(self.url)
         time.sleep(2)
         results = browser.find_elements(By.CSS_SELECTOR, ".horizontal_1eKyQ")
+        while results is None:
+            results = browser.find_elements(By.CSS_SELECTOR, ".horizontal_1eKyQ")
+            time.sleep(2)
         target = []
         for result in results:
             temp_target = {}

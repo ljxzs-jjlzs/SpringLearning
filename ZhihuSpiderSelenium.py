@@ -4,38 +4,6 @@ import time
 import pyautogui
 import json
 import pymysql
-# import requests
-# from pyquery import PyQuery as pq
-from datetime import datetime
-import os
-
-# driver = webdriver.Chrome()
-# driver.maximize_window()
-# driver.get("https://www.zhihu.com/hot")
-# time.sleep(3)
-# pyautogui.moveTo(1166, 787, duration=1)
-# time.sleep(2)
-# pyautogui.click()
-# pyautogui.moveTo(939, 630, duration=1)
-# time.sleep(2)
-# pyautogui.click()
-# time.sleep(5)
-# results = driver.find_elements(By.CSS_SELECTOR, '.HotItem')
-# i = 1
-# for result in results:
-#     index = result.find_element(By.CSS_SELECTOR, '.HotItem-rank').text
-#     print(index)
-#     print(result.find_element(By.CSS_SELECTOR, '.HotItem-content a').get_attribute('href'))
-#     print(result.find_element(By.CSS_SELECTOR, '.HotItem-content a').get_attribute('title'))
-#     print(result.find_element(By.CSS_SELECTOR, '.HotItem-metrics').text)
-#     i += 1
-# driver.close()
-
-
-import json
-import pymysql
-import requests
-from pyquery import PyQuery as pq
 from datetime import datetime
 import os
 
@@ -75,6 +43,9 @@ class ZhiHuSpider:
         pyautogui.click()
         time.sleep(5)
         results = driver.find_elements(By.CSS_SELECTOR, '.HotItem')
+        while results is None:
+            results = driver.find_elements(By.CSS_SELECTOR, '.HotItem')
+            time.sleep(2)
         for result in results:
             target = {'index_s': int(result.find_element(By.CSS_SELECTOR, '.HotItem-rank').text),
                       'titles': result.find_element(By.CSS_SELECTOR, '.HotItem-content a').get_attribute('title'),
