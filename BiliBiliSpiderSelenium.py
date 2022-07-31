@@ -6,6 +6,8 @@ import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
+from BiliBiliSpider_Comment import BiliBiliSpiderComment
+
 '''
 准备工作：安装上面的外部库函数以及安装mysql或者使用远程的mysql
 使用方法：直接调用main函数即可,如果无法成功运行需要自己更改init函数中的cookie字段， 注意在save_database函数中,
@@ -26,6 +28,7 @@ class BiliBiliSpider:
         self.filename = './BiliBili/BiliBili' + self.today + '.json'
         self.filename_ = './BiliBili/BiliBili' + str(build_time.strftime("%Y_%m_%d_%H")) + '.json'
         self.build_time = build_time
+        self.comment_spider = BiliBiliSpiderComment()
 
     def get_page(self):
         driver = webdriver.Chrome()
@@ -113,6 +116,20 @@ class BiliBiliSpider:
         self.get_page()
         self.save_json()
         self.save_database()
+
+    def main_all(self):
+        self.main()
+        self.comment_spider.get_comments_all()
+        with open('./BiliBili/BiliBiliBefore.json', 'w', encoding='utf-8') as f1, \
+                open(self.filename, 'r', encoding='utf-8') as f2:
+            f1.write(json.dumps(json.loads(f2.read()), indent=2, ensure_ascii=False))
+
+    def main_part(self):
+        self.main()
+        self.comment_spider.get_comments()
+        with open('./BiliBili/BiliBiliBefore.json', 'w', encoding='utf-8') as f1, \
+                open(self.filename, 'r', encoding='utf-8') as f2:
+            f1.write(json.dumps(json.loads(f2.read()), indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":
