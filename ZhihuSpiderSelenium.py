@@ -23,12 +23,147 @@ class ZhiHuSpider:
         # self.today是今天的日期,格式为 %d_%b_%Y 例如：Jul_21_2022
         self.today = str(build_time.strftime("%d_%b_%Y"))
         if not os.path.exists("./ZhiHu"):
-            # print("已经建立文件夹")
             os.mkdir('./ZhiHu')
+        if not os.path.exists("./ZhiHuComments"):
+            os.mkdir('./ZhiHuComments')
+        if not os.path.exists("./ZhiHuCommentsNew"):
+            os.mkdir('./ZhiHuCommentsNew')
         self.filename = './ZhiHu/ZhiHu' + self.today + '.json'
         self.filename_ = './ZhiHu/ZhiHu' + str(build_time.strftime("%Y_%m_%d_%H")) + '.json'
         self.html = None
         self.build_time = build_time
+        self.driver = None
+        self.before = None
+
+    def open(self):
+        self.driver = webdriver.Chrome()
+        self.driver.maximize_window()
+
+    def close(self):
+        self.driver.quit()
+
+    def login(self):
+        self.driver.get('https://www.zhihu.com/question/544969213?utm_division=hot_list_page')
+        time.sleep(3)
+        pyautogui.moveTo(1166, 787, duration=1)
+        time.sleep(2)
+        pyautogui.click()
+        pyautogui.moveTo(939, 630, duration=1)
+        time.sleep(2)
+        pyautogui.click()
+        time.sleep(5)
+
+    def get_comments(self):
+        with open(self.filename, 'r', encoding='utf-8') as f:
+            datas = json.loads(f.read())
+        for data in datas:
+            link = data['links']
+            self.driver.get(link)
+            time.sleep(3)
+            self.driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
+            time.sleep(5)
+            pyautogui.moveTo(1912, 1016, duration=0.5)
+            pyautogui.click()
+            pyautogui.moveTo(1912, 500, duration=0.5)
+            pyautogui.click()
+            time.sleep(3)
+            self.driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
+            time.sleep(5)
+            items = self.driver.find_elements(By.CSS_SELECTOR, '.AnswerItem')
+
+            targets = []
+            for item in items:
+                target = {
+                    'name': item.find_element(By.CSS_SELECTOR,
+                                              'div[class="AuthorInfo"] meta[itemprop="name"]').get_attribute(
+                        'content'), 'author_link': item.find_element(By.CSS_SELECTOR,
+                                                                     'div[class="AuthorInfo"] meta[itemprop="url"]').get_attribute(
+                        'content')}
+
+                data_str = ''
+                comments = item.find_elements(By.CSS_SELECTOR, '.RichText p')
+                for comment in comments:
+                    if comment.get_attribute('class') == 'ztext-empty-paragraph':
+                        continue
+                    else:
+                        data_str = data_str + comment.text + '\n'
+                target['comment'] = data_str
+                try:
+                    target['likes'] = int(item.find_element(By.CSS_SELECTOR, '.VoteButton--up').text.split(' ')[1])
+                except:
+                    target['likes'] = 0
+                if target['likes'] < 300:
+                    if len(target['comment']) > 200:
+                        target['comment'] = target['comment'][:200] + '...'
+                targets.append(target)
+
+            filename = './ZhiHuComments/Comment_' + str(data['index_s']) + '.json'
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(json.dumps(targets, indent=2, ensure_ascii=False))
+
+    def found(self, links):
+        for data in self.before:
+            if links == data['links']:
+                return data['index_s']
+
+        return -1
+
+    def get_comments_part(self):
+        with open(self.filename, 'r', encoding='utf-8') as f, open('./ZhiHu/before.json', 'r', encoding='utf-8') as f1:
+            datas = json.loads(f.read())
+            self.before = json.loads(f1.read())
+        for data in datas:
+            link = data['links']
+            self.driver.get(link)
+            answer = self.found(data['links'])
+            if answer > -1:
+                old_filename = './ZhiHuComments/Comment_' + str(answer) + '.json'
+                new_filename = './ZhiHuCommentsNew/Comment_' + data['index_s'] + '.json'
+                with open(old_filename, 'r', encoding='utf-8') as f1, open(new_filename, 'w', encoding='utf-8') as f2:
+                    f2.write(json.dumps(json.loads(f.read()), indent=2, ensure_ascii=False))
+                continue
+
+            time.sleep(3)
+            self.driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
+            time.sleep(5)
+            pyautogui.moveTo(1912, 1016, duration=0.5)
+            pyautogui.click()
+            pyautogui.moveTo(1912, 500, duration=0.5)
+            pyautogui.click()
+            time.sleep(3)
+            self.driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
+            time.sleep(5)
+            items = self.driver.find_elements(By.CSS_SELECTOR, '.AnswerItem')
+
+            targets = []
+            for item in items:
+                target = {
+                    'name': item.find_element(By.CSS_SELECTOR,
+                                              'div[class="AuthorInfo"] meta[itemprop="name"]').get_attribute(
+                        'content'), 'author_link': item.find_element(By.CSS_SELECTOR,
+                                                                     'div[class="AuthorInfo"] meta[itemprop="url"]').get_attribute(
+                        'content')}
+
+                data_str = ''
+                comments = item.find_elements(By.CSS_SELECTOR, '.RichText p')
+                for comment in comments:
+                    if comment.get_attribute('class') == 'ztext-empty-paragraph':
+                        continue
+                    else:
+                        data_str = data_str + comment.text + '\n'
+                target['comment'] = data_str
+                try:
+                    target['likes'] = int(item.find_element(By.CSS_SELECTOR, '.VoteButton--up').text.split(' ')[1])
+                except:
+                    target['likes'] = 0
+                if target['likes'] < 300:
+                    if len(target['comment']) > 200:
+                        target['comment'] = target['comment'][:200] + '...'
+                targets.append(target)
+
+            filename = './ZhiHuCommentsNew/Comment_' + str(data['index_s']) + '.json'
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(json.dumps(targets, indent=2, ensure_ascii=False))
 
     def get_page(self):
         driver = webdriver.Chrome()
@@ -120,6 +255,20 @@ class ZhiHuSpider:
         self.get_page()
         self.save_json()
         self.save_database()
+
+    def main_all(self):
+        self.main()
+        self.open()
+        self.login()
+        self.get_comments()
+        self.close()
+
+    def main_part(self):
+        self.main()
+        self.open()
+        self.login()
+        self.get_comments_part()
+        self.close()
 
 
 if __name__ == "__main__":
