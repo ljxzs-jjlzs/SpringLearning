@@ -254,7 +254,10 @@ class ZhiHuSpider:
     def main(self):
         self.get_page()
         self.save_json()
-        self.save_database()
+        try:
+            self.save_database()
+        except:
+            self.main()
 
     def main_all(self):
         self.main()
