@@ -26,6 +26,7 @@ def get_page(url):
         temp_target["index_s"] = temp_index.text
         target.append(temp_target)
     browser.close()
+    print("hello")
     return target
 
 
